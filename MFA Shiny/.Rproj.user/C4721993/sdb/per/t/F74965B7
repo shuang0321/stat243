@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "#global AFM\nlibrary(MFA)\nx <- read.csv('wines.csv')\nnomData <- 'wines'\n\nquanti=names(which(sapply(x,is.numeric)))\nquali=names(which(!(sapply(x,is.numeric))))\nVariableChoices=quanti\nnom=rownames(x)\nnum=c(1:length(nom))\nQualiChoice=quali\nIdChoices=c(1:length(VariableChoices))\nIdqualisup=c(1:length(QualiChoice))\n\ngsets<-list(1:6,7:12,13:18,19:23,24:29,30:34,35:38,39:44,45:49,50:53)\ngnumset=list()\nfor (i in 1:length(gsets)) {\n  gnumset[i] <- length(gsets[[i]])\n}\nglabels <- c(\"NZ1\",\"NZ2\",\"NZ3\",\"NZ4\",\"FR1\",\"FR2\",\"FR3\",\"FR4\",\"CA1\",\"CA2\",\"CA3\",\"CA4\")\ngplaces <- substr(glabels,1,2)",
+    "created" : 1480638087182.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "483187652",
+    "id" : "F74965B7",
+    "lastKnownWriteTime" : 1480544988,
+    "last_content_update" : 1480544988,
+    "path" : "~/Desktop/study/243 final project/MFA Shiny/global.R",
+    "project_path" : "global.R",
+    "properties" : {
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "#' @title Print summary of eigen values of MFA\n#' @description This function gets summary the eigens value of MFA\n#' @param MFA - a \"mfa\" object\n#' @param ncomps - the number of eigen values -default\n#' @return List containing:\n#'\n#' Singular values\n#'\n#' Eigenvalues\n#'\n#' % cumulative eigenvalues\n#'\n#' % Inertia\n#'\n#' % cumulative Inertia\n#' @export\n\nsummary.mfa<-function(MFA,ncomps=NULL){\n  if(class(MFA)!=\"mfa\"){\n    stop(\"Please input 'mfa' object\")\n  }\n  if(is.null(ncomps))\n    Eigens<-MFA$MatrixA\n  else\n    Eigens<-MFA$MatrixA[1:ncomps,]\n  return(Eigens)\n}\n",
+    "created" : 1481233306774.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2679296992",
+    "id" : "E66E7513",
+    "lastKnownWriteTime" : 1480544546,
+    "last_content_update" : 1480544546,
+    "path" : "~/Desktop/study/243 final project/MFA/R/summary.R",
+    "project_path" : "R/summary.R",
+    "properties" : {
+    },
+    "relative_order" : 12,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

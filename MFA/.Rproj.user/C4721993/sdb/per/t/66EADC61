@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "#' @title Generalized Singular Value Decomposition\n#' @description This function performs Generalized Singular Value Decomposition\n#' @param Data - raw Matrix used for Decomposition\n#' @param PLin - Vector with weights for lines\n#' @param PCol - Vector with weights for columns\n#' @return List containing:\n#'\n#' d - Vector line with the singular values of the result\n#'\n#' u - Line eigenvectors\n#'\n#' v - Column relative eigenvectors\n#' @export\n#' @examples\n#' gvsd1 <- GSVD(Data=mtcars)\n\nGSVD <- function(Data, PLin = NULL, PCol = NULL) {\n\n  if (is.null(PCol)) PCol <- rep(1, ncol(Data))\n\n  if (is.null(PLin)) PLin <- rep(1, nrow(Data))\n\n  else if (is.numeric(PLin)) PLin = PLin / sum(PLin)\n\n\n  if (!is.numeric(PLin))\n    stop(\"Input to 'PLin' must be of the numeric vector type. Check!\")\n\n  if (!is.numeric(PCol))\n    stop(\"Input to 'PCol' must be of the numeric vector type. Check!\")\n\n  if (nrow(Data) != length(PLin))\n    stop(\"The number of elements in 'Plin' must be equal to the number of lines of the 'Data' component. Check!\")\n\n  if (ncol(Data) != length(PCol))\n    stop(\"The number of elements in 'PCol' must be equal to the number of columns of the 'Data' component. Check!\")\n\n\n  PLin <- as.vector(PLin)\n\n  PCol <- as.vector(PCol)\n\n  ncv <- min(nrow(Data)-1,ncol(Data)) # Number of valid columns\n\n  AA = sweep(Data, 2, sqrt(PCol), FUN = \"*\")\n\n  AA = sweep(AA, 1, sqrt(PLin), FUN = \"*\")\n\n  MSVD <- svd(AA)\n  d <- MSVD$d\n  MU <- MSVD$u\n  MV <- MSVD$v\n\n  P <- diag(sqrt(1/PLin))%*%MU\n\n  Q <- diag(sqrt(1/PCol))%*%MV\n\n  Resp <- list(d = d[1:ncv], u = P[,1:ncv], v = Q[,1:ncv])\n\n  return(Resp)\n}\n",
+    "created" : 1481233242018.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "4012708197",
+    "id" : "66EADC61",
+    "lastKnownWriteTime" : 1480544542,
+    "last_content_update" : 1480544542,
+    "path" : "~/Desktop/study/243 final project/MFA/R/GSVD.R",
+    "project_path" : "R/GSVD.R",
+    "properties" : {
+    },
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

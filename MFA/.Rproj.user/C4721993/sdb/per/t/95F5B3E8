@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "Package: MFA\nType: Package\nTitle: Multiple factor analysis\nVersion: 0.1.0\nAuthors: Michelle Huang, Shuhui Huang, Kara Yang, Michael Xie\nMaintainer: Shuhui Huang <hij1356@berkeley.edu>\nDescription: A brief description of MFA functionalities\nLicense: BSD 2.0\nEncoding: UTF-8\nLazyData: TRUE\nRoxygenNote: 5.0.1\nCollate:\n  GSVD.R\n  MFA.R\n  summary.R\n  Lg_table.R\n  Lg.R\n  Rv_table.R\n  Rv.R\n  bootstrap.R\n  contributions.R\n  plot.R\nSuggests: knitr,\n    rmarkdown\nVignetteBuilder: knitr\n",
+    "created" : 1481065896308.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3196829835",
+    "id" : "95F5B3E8",
+    "lastKnownWriteTime" : 1481065937,
+    "last_content_update" : 1481065937843,
+    "path" : "~/Desktop/study/243 final project/MFA/DESCRIPTION",
+    "project_path" : "DESCRIPTION",
+    "properties" : {
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "dcf"
+}

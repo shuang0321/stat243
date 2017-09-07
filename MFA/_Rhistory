@@ -1,0 +1,512 @@
+j<-j+length(sets[[i-1]])
+ContrGru[i,] <- apply(ContrVar[j:(j+length(sets[[i]])-1), ], 2, sum) # Matriz com Contribuicoes dos Grupos
+}
+### End revising
+EscVar <- sweep(ContrGru, 2, MAutoVlr^2, "*") # create matrix of variables scores/partial inertia
+colnames(EscVar) <- paste("Axis", 1:ncol(as.matrix(EscVar)), sep = " ") # name the columns
+#rownames(EscVar) <- c("group 1", "group 2") # name of rows ???
+### End - Partial matrix of inertia/scores of variables ###
+dim <- ncol(as.matrix(EscVar))
+A= unique(PColG)
+rownames(A)<-paste0("table",1:length(A))
+colnames(A)<-c("weight")
+if(is.null(ncomps))
+Lista <- list(Dimension = dim, Sets= NumSets, M = unique(PLinG), A= A,
+MatrixPLin = PLinG,
+MatrixPCol = PColG, MatrixZ = MZG, MatrixA = MEigen,
+MatrixU = MAutoVecU, MatrixV = MAutoVecV, MatrixF = MF,
+MatrixEFG = LMFGrupo, MatrixCCP = CCP, MatrixEscVar = EscVar)
+else {
+EFG<-list()
+dim = ncomps
+for(i in 1:NumSets)
+EFG[[i]]<-LMFGrupo[[i]][,1:ncomps]
+Lista <- list(Dimension = dim, Sets= NumSets, M = unique(PLinG), A= A,
+MatrixPLin = PLinG,
+MatrixPCol = PColG, MatrixZ = MZG, MatrixA = MEigen[1:ncomps,],
+MatrixU = MAutoVecU[,1:ncomps], MatrixV = MAutoVecV, MatrixF = MF[,1:ncomps],
+MatrixEFG = EFG, MatrixCCP = CCP, MatrixEscVar = EscVar[,1:ncomps])
+}
+class(Lista)<-"mfa"
+return(Lista)
+}
+#' @title Print method for 'mfa' object
+#' @description This function defines a print method for "mfa" object
+#' @param  x - mfa-object
+#' @param \dots further arguments ignored
+#' @return basic information of the 'mfa' object including class, dimension, number of the sets, row mass and table weight of the 'mfa' object
+#' @export
+print.mfa<-function(x, ...){
+cat('object: "mfa"\n')
+cat(sprintf('Dimension: "%s"\n', x$Dimension))
+cat(sprintf('Number of the sets: "%s"\n', x$Sets))
+cat(sprintf('Mass of each row:"%s" \n',x$M))
+cat("Weight of each set:\n")
+print(x$A)
+}
+summary<-function(MFA,ncomps=NULL){
+if(class(MFA)!="mfa"){
+stop("Please input 'mfa' object")
+}
+if(is.null(ncomps))
+Eigens<-MFA$MatrixA
+else
+Eigens<-MFA$MatrixA[1:ncomps,]
+return(Eigens)
+}
+library(devtools)
+# creating documentation (i.e. the Rd files in man/)
+devtools::document()
+# checking documentation
+devtools::check_man() # run tests
+devtools::test()
+# checking documentation
+devtools::build_vignettes()
+# building tarball (e.g. oski_0.1.tar.gz)
+devtools::build()
+# checking install
+devtools::install()
+library(devtools)
+# creating documentation (i.e. the Rd files in man/)
+devtools::document()
+# checking documentation
+devtools::check_man() # run tests
+devtools::test()
+# checking documentation
+devtools::build_vignettes()
+# building tarball (e.g. oski_0.1.tar.gz)
+devtools::build()
+# checking install
+devtools::install()
+# auxiliar function to check the dimension of table1 and table2
+check_types<-function(type){
+if(type>3 | type <1){
+stop("\n'type' must be 1, 2 or 3")
+}
+if(type%%1!=0){
+stop("\n'type' must be 1, 2 or 3")
+}
+TRUE
+}
+#' @title Compute contribution
+#' @description This function gets the contribution
+#' @param X - the raw matrix need to be dealt with
+#' @param sets -  list of vectors indicating the sets of variables (i.e. the blocks)
+#' @param type - 1: Contribution of an observation to a dimension
+#' 2: Contribution of a variable to a dimension
+#' 3: Contribution of a table to a dimension.
+#' @return contributions : the contribution of required type
+#' @export
+#' @examples
+#' contr <- contributions(X=mtcars,sets=list(1:3,4:6,7:8,9:11),type=1)
+contributions<-function(X,sets, type=1) {
+check_sets(X,sets)
+check_types(type)
+## initialize and get the mfa of the raw matrix
+MFA<-mfa(X,sets,ncomps=NULL,TRUE,TRUE) #get the mfa of raw matrix
+rcontribution<-NULL
+contribution1<-matrix(nrow=nrow(MFA$MatrixF),ncol=ncol(MFA$MatrixF))
+contribution2<-matrix(nrow=nrow(MFA$MatrixV),ncol=ncol(MFA$MatrixV))
+contribution3<-matrix(nrow=length(sets),ncol=ncol(MFA$MatrixV))
+eigen<-NULL  #the eigenvalue
+a<-NULL #the alpha weight
+m<-rep(1/nrow(X),nrow(X))  #the weight of each row
+start<-1   #start point of type3
+##get the contribution
+if(type==1){
+for (j in 1:ncol(MFA$MatrixF))
+{
+eigen[j]<-MFA$MatrixA[j,2] #get the eigenvalue of jth dimension
+for (i in 1:nrow(X))
+contribution1[i,j]<-(m[j]*(MFA$MatrixF[i,j])^2)/eigen[j] # Contribution of ith observation to jth dimension.
+}
+rcontribution<-contribution1
+}
+else{
+if(type==2)
+{
+a<-MFA$MatrixPCol
+for (j in 1:ncol(MFA$MatrixV))
+{
+for (i in 1:nrow(MFA$MatrixV))
+contribution2[i,j]<-(MFA$MatrixV[i,j])^2*a[j]  #Contribution of ith variable to a jth dimensionn
+}
+rcontribution<-contribution2
+}
+if(type==3)
+{
+a<-MFA$MatrixPCol
+for (j in 1:ncol(MFA$MatrixV))
+{
+for (i in 1:nrow(MFA$MatrixV))
+contribution2[i,j]<-(MFA$MatrixV[i,j])^2*a[j]
+}
+### Revise begin
+for (j in 1:ncol(contribution2))
+{
+for (h in 1: length(sets))
+{
+if(h==1)
+start<-1
+else
+start<-length(sets[[h-1]])+start
+contribution3[h,j]<- sum(contribution2[start:(start+length(sets[[h]])-1),j]) #Contribution of hth table to j dimension.
+}
+}
+### Revise end
+rcontribution<-contribution3
+}
+}
+return(rcontribution)
+}
+contr1 <- contributions(X=mtcars,sets=list(1:3,4:6,7:8,9:11),type=1)
+contr1
+contr2 <- contributions(X=mtcars,sets=list(1:3,4:6,7:8,9:11),type=2)
+contr2
+contr3 <- contributions(X=mtcars,sets=list(1:3,4:6,7:8,9:11),type=3)
+contr3
+devtools::document()
+# checking documentation
+devtools::check_man() # run tests
+devtools::test()
+# checking documentation
+devtools::build_vignettes()
+# building tarball (e.g. oski_0.1.tar.gz)
+devtools::build()
+# checking install
+devtools::install()
+library(MFA)
+?mfa
+?contributions
+?bootstrap
+cars<-read.table("cars.txt",header = TRUE)
+plot.mfa <- function(MFA,labels,dim1,dim2){
+if(class(MFA)!= 'mfa'){
+stop("\n 'MFA' must be a 'mfa' object")
+}
+### Checking input arguments
+check_dim(MFA,dim1)
+check_dim(MFA,dim2)
+### Creating label parts
+library(stringr)
+number<-str_extract(labels,"[[:digit:]]+")
+category<-str_extract(labels,"[a-zA-Z]+")
+library(ggplot2)
+### Compromised factor score plot
+p=ggplot(as.data.frame(MFA$MatrixF),aes(x=MFA$MatrixF[,dim1],y=MFA$MatrixF[,dim2],color=category))+labs(x=paste("Axis",dim1),y=paste("Axis",dim2))
+p=p+geom_point(size=3.8)
+p=p+geom_text(aes(label = number, vjust = 1.1, hjust = -0.5))
+print(p)
+### Partial factore score plot
+plot<-list()
+for(i in 1:MFA$Sets){
+plot[[i]]<-ggplot(as.data.frame(MFA$MatrixEFG[[i]][,c(dim1,dim2)]),aes(x=MFA$MatrixEFG[[i]][,dim1],y=MFA$MatrixEFG[[i]][,dim2],color=category))+ggtitle(paste("Observation",i))+
+geom_point(size=3.8)+geom_text(aes(label=labels,vjust = 2, hjust = 0.5))+labs(x=paste("Axis",dim1),y=paste("Axis",dim2))
+print(plot[[i]])
+}
+wines<-read.csv("https://raw.githubusercontent.com/ucb-stat243/stat243-fall-2016/master/problem-sets/final-project/data/wines.csv")
+X<-as.matrix(wines[1:12,2:54])
+sets<-list(1:6,7:12,13:18,19:23,24:29,30:34,35:38,39:44,45:49,50:53)
+MFA<-mfa(X,sets,ncomps=NULL)
+}}
+plot.mfa <- function(MFA,labels,dim1,dim2){
+if(class(MFA)!= 'mfa'){
+stop("\n 'MFA' must be a 'mfa' object")
+}
+### Checking input arguments
+check_dim(MFA,dim1)
+check_dim(MFA,dim2)
+### Creating label parts
+library(stringr)
+number<-str_extract(labels,"[[:digit:]]+")
+category<-str_extract(labels,"[a-zA-Z]+")
+library(ggplot2)
+### Compromised factor score plot
+p=ggplot(as.data.frame(MFA$MatrixF),aes(x=MFA$MatrixF[,dim1],y=MFA$MatrixF[,dim2],color=category))+labs(x=paste("Axis",dim1),y=paste("Axis",dim2))
+p=p+geom_point(size=3.8)
+p=p+geom_text(aes(label = number, vjust = 1.1, hjust = -0.5))
+print(p)
+### Partial factore score plot
+plot<-list()
+for(i in 1:MFA$Sets){
+plot[[i]]<-ggplot(as.data.frame(MFA$MatrixEFG[[i]][,c(dim1,dim2)]),aes(x=MFA$MatrixEFG[[i]][,dim1],y=MFA$MatrixEFG[[i]][,dim2],color=category))+ggtitle(paste("Observation",i))+
+geom_point(size=3.8)+geom_text(aes(label=labels,vjust = 2, hjust = 0.5))+labs(x=paste("Axis",dim1),y=paste("Axis",dim2))
+print(plot[[i]])
+}}
+wines<-read.csv("https://raw.githubusercontent.com/ucb-stat243/stat243-fall-2016/master/problem-sets/final-project/data/wines.csv")
+X<-as.matrix(wines[1:12,2:54])
+sets<-list(1:6,7:12,13:18,19:23,24:29,30:34,35:38,39:44,45:49,50:53)
+MFA<-mfa(X,sets,ncomps=NULL)
+ID = wines[,1]
+plot(MFA,ID,1,2)
+# auxiliar function to check the length of the labels
+check_label<-function(data,labels){
+if(nrow(data)!=length(labels)){
+stop("\n'labels' must have the same length as the number of the rows in the data")
+}
+TRUE
+}
+# auxiliar function to check the dimensions
+check_dim<-function(MFA,dim){
+if(dim>ncol(MFA$MatrixF)){
+stop(paste0("\n'",dim,"' is out of the range, please check!"))
+}
+if(!is.numeric(dim)){
+stop(paste("\n",dim,"must be a number"))
+}
+if(dim%%1!=0){
+stop(paste("\n",dim,"must be an integer"))
+}
+if(dim<1){
+stop(paste("\n",dim,"must be a positive integer equal or bigger to 1"))
+}
+TRUE
+}
+#' @title Plot of compromised factor scores
+#' @description This function generates plots of compromised  factor scores across two selected axes
+#' @param data - data set
+#' @param sets - list of vectors indicating the sets of variables
+#' @param center - logical argument, whether to center
+#' @param scale - logical arugment, whether to scale
+#' @param dim1 - integer, selected dimension to plot on x-axis
+#' @param dim2 - integer, selected dimension to plot on y-axis
+#' @param labels - label for each row
+#' @return plots of compromised factor scores for the two selected axes
+#' @export
+#' @examples
+#' plot_factorscore(mtcars[c(1:2,4:5,8:9,20:21),],sets=list(1:3,4:6,7:8,9:11),dim1=1,dim2=2,labels=c("Maz1","Maz2","Hor1","Hor2","Merc1","Merc2","Toyota1","Toyota2"))
+plot_factorscore<-function(data,sets,center=TRUE,scale=TRUE,dim1,dim2,labels){
+check_label(data,labels)
+MFA<-mfa(data,sets=sets,ncomps=NULL,center=center,scale=scale)
+check_dim(MFA,dim1)
+check_dim(MFA,dim2)
+library(stringr)
+number<-str_extract(labels,"[[:digit:]]+")
+category<-str_extract(labels,"[a-zA-Z]+")
+library(ggplot2)
+p=ggplot(as.data.frame(MFA$MatrixF),aes(x=MFA$MatrixF[,dim1],y=MFA$MatrixF[,dim2],color=category))+labs(x=paste("Axis",dim1),y=paste("Axis",dim2))
+p=p+geom_point(size=3.8)
+p=p+geom_text(aes(label = number, vjust = 1.1, hjust = -0.5))
+print(p)
+}
+plot(MFA,ID,1,2)
+plot.mfa <- function(MFA,labels,dim1,dim2){
+if(class(MFA)!= 'mfa'){
+stop("\n 'MFA' must be a 'mfa' object")
+}
+### Checking input arguments
+check_dim(MFA,dim1)
+check_dim(MFA,dim2)
+### Creating label parts
+library(stringr)
+number<-str_extract(labels,"[[:digit:]]+")
+category<-str_extract(labels,"[a-zA-Z]+")
+library(ggplot2)
+### Compromised factor score plot
+p=ggplot(as.data.frame(MFA$MatrixF),aes(x=MFA$MatrixF[,dim1],y=MFA$MatrixF[,dim2],color=category))+labs(x=paste("Axis",dim1),y=paste("Axis",dim2))+ggtitle("Compromised Factor Scores")
+p=p+geom_point(size=3.8)
+p=p+geom_text(aes(label = number, vjust = 1.1, hjust = -0.5))
+print(p)
+### Partial factore score plot
+plot<-list()
+for(i in 1:MFA$Sets){
+plot[[i]]<-ggplot(as.data.frame(MFA$MatrixEFG[[i]][,c(dim1,dim2)]),aes(x=MFA$MatrixEFG[[i]][,dim1],y=MFA$MatrixEFG[[i]][,dim2],color=category))+
+ggtitle(expression(atop("Partial Factor Score and Variable Loadings", atop(italic(paste("Partial Factor ScoresObservation",i)), ""))))+
+geom_point(size=3.8)+geom_text(aes(label=labels,vjust = 2, hjust = 0.5))+labs(x=paste("Axis",dim1),y=paste("Axis",dim2))
+print(plot[[i]])
+}}
+ID = wines[,1]
+plot(MFA,ID,1,2)
+plot.mfa <- function(MFA,labels,dim1,dim2){
+if(class(MFA)!= 'mfa'){
+stop("\n 'MFA' must be a 'mfa' object")
+}
+### Checking input arguments
+check_dim(MFA,dim1)
+check_dim(MFA,dim2)
+### Creating label parts
+library(stringr)
+number<-str_extract(labels,"[[:digit:]]+")
+category<-str_extract(labels,"[a-zA-Z]+")
+library(ggplot2)
+### Compromised factor score plot
+p=ggplot(as.data.frame(MFA$MatrixF),aes(x=MFA$MatrixF[,dim1],y=MFA$MatrixF[,dim2],color=category))+labs(x=paste("Axis",dim1),y=paste("Axis",dim2))+ggtitle("Compromised Factor Scores")
+p=p+geom_point(size=3.8)
+p=p+geom_text(aes(label = number, vjust = 1.1, hjust = -0.5))
+print(p)
+### Partial factore score plot
+plot<-list()
+for(i in 1:MFA$Sets){
+plot[[i]]<-ggplot(as.data.frame(MFA$MatrixEFG[[i]][,c(dim1,dim2)]),aes(x=MFA$MatrixEFG[[i]][,dim1],y=MFA$MatrixEFG[[i]][,dim2],color=category))+ggtitle(paste("Partial Factor Scores and Variable Loadings - Observation",i))+
+geom_point(size=3.8)+geom_text(aes(label=labels,vjust = 2, hjust = 0.5))+labs(x=paste("Axis",dim1),y=paste("Axis",dim2))
+print(plot[[i]])
+}}
+plot(MFA,ID,1,2)
+plot.mfa <- function(MFA,labels,dim1,dim2){
+if(class(MFA)!= 'mfa'){
+stop("\n 'MFA' must be a 'mfa' object")
+}
+### Checking input arguments
+check_dim(MFA,dim1)
+check_dim(MFA,dim2)
+### Creating label parts
+library(stringr)
+number<-str_extract(labels,"[[:digit:]]+")
+category<-str_extract(labels,"[a-zA-Z]+")
+library(ggplot2)
+### Compromised factor score plot
+p=ggplot(as.data.frame(MFA$MatrixF),aes(x=MFA$MatrixF[,dim1],y=MFA$MatrixF[,dim2],color=category))+labs(x=paste("Axis",dim1),y=paste("Axis",dim2))+ggtitle("Compromised Factor Scores")
+p=p+geom_point(size=3.8)
+p=p+geom_text(aes(label = number, vjust = 1.1, hjust = -0.5))
+print(p)
+### Partial factore score plot
+plot<-list()
+for(i in 1:MFA$Sets){
+plot[[i]]<-ggplot(as.data.frame(MFA$MatrixEFG[[i]][,c(dim1,dim2)]),aes(x=MFA$MatrixEFG[[i]][,dim1],y=MFA$MatrixEFG[[i]][,dim2],color=category))+ggtitle(paste("Partial Factor Scores & Variable Loadings - Observation",i))+
+geom_point(size=3.8)+geom_text(aes(label=labels,vjust = 2, hjust = 0.5))+labs(x=paste("Axis",dim1),y=paste("Axis",dim2))
+print(plot[[i]])
+}}
+plot(MFA,ID,1,2)
+plot.mfa <- function(MFA,labels,dim1,dim2){
+if(class(MFA)!= 'mfa'){
+stop("\n 'MFA' must be a 'mfa' object")
+}
+### Checking input arguments
+check_dim(MFA,dim1)
+check_dim(MFA,dim2)
+### Creating label parts
+library(stringr)
+number<-str_extract(labels,"[[:digit:]]+")
+category<-str_extract(labels,"[a-zA-Z]+")
+library(ggplot2)
+### Compromised factor score plot
+p=ggplot(as.data.frame(MFA$MatrixF),aes(x=MFA$MatrixF[,dim1],y=MFA$MatrixF[,dim2],color=category))+labs(x=paste("Axis",dim1),y=paste("Axis",dim2))+ggtitle("Compromised Factor Scores")
+p=p+geom_point(size=3.8)
+p=p+geom_text(aes(label = number, vjust = 1.1, hjust = -0.5))
+print(p)
+### Partial factore score plot
+plot<-list()
+for(i in 1:MFA$Sets){
+plot[[i]]<-ggplot(as.data.frame(MFA$MatrixEFG[[i]][,c(dim1,dim2)]),aes(x=MFA$MatrixEFG[[i]][,dim1],y=MFA$MatrixEFG[[i]][,dim2],color=category))+ggtitle(paste("Partial Factor Scores & Variable Loadings - Observation",i))+
+geom_point(size=3.8)+geom_text(aes(label=labels,vjust = 2, hjust = 0.5))+labs(x=paste("Axis",dim1),y=paste("Axis",dim2),title="Partial Factor Scores & Variable Loadings",subtitle=paste("Observation",i))
+print(plot[[i]])
+}}
+plot(MFA,ID,1,2)
+plot.mfa <- function(MFA,labels,dim1,dim2){
+if(class(MFA)!= 'mfa'){
+stop("\n 'MFA' must be a 'mfa' object")
+}
+### Checking input arguments
+check_dim(MFA,dim1)
+check_dim(MFA,dim2)
+### Creating label parts
+library(stringr)
+number<-str_extract(labels,"[[:digit:]]+")
+category<-str_extract(labels,"[a-zA-Z]+")
+library(ggplot2)
+### Compromised factor score plot
+p=ggplot(as.data.frame(MFA$MatrixF),aes(x=MFA$MatrixF[,dim1],y=MFA$MatrixF[,dim2],color=category))+labs(x=paste("Axis",dim1),y=paste("Axis",dim2))+ggtitle("Compromised Factor Scores")
+p=p+geom_point(size=3.8)
+p=p+geom_text(aes(label = number, vjust = 1.1, hjust = -0.5))
+print(p)
+### Partial factore score plot
+plot<-list()
+for(i in 1:MFA$Sets){
+plot[[i]]<-ggplot(as.data.frame(MFA$MatrixEFG[[i]][,c(dim1,dim2)]),aes(x=MFA$MatrixEFG[[i]][,dim1],y=MFA$MatrixEFG[[i]][,dim2],color=category))+ggtitle(paste("Partial Factor Scores & Variable Loadings - Observation",i))+
+geom_point(size=3.8)+geom_text(aes(label=labels,vjust = 2, hjust = 0.5))+labs(x=paste("Axis",dim1),y=paste("Axis",dim2))
+print(plot[[i]])
+}}
+plot(MFA,ID,1,2)
+plot.mfa <- function(MFA,labels,dim1,dim2){
+if(class(MFA)!= 'mfa'){
+stop("\n 'MFA' must be a 'mfa' object")
+}
+### Checking input arguments
+check_dim(MFA,dim1)
+check_dim(MFA,dim2)
+### Creating label parts
+library(stringr)
+number<-str_extract(labels,"[[:digit:]]+")
+category<-str_extract(labels,"[a-zA-Z]+")
+library(ggplot2)
+### Compromised factor score plot
+p=ggplot(as.data.frame(MFA$MatrixF),aes(x=MFA$MatrixF[,dim1],y=MFA$MatrixF[,dim2],color=category))+labs(x=paste("Axis",dim1),y=paste("Axis",dim2))+ggtitle("Compromised Factor Scores")
+p=p+geom_point(size=3.8)
+p=p+geom_text(aes(label = number, vjust = 1.1, hjust = -0.5))
+print(p)
+### Partial factore score plot
+plot<-list()
+for(i in 1:MFA$Sets){
+plot[[i]]<-ggplot(as.data.frame(MFA$MatrixEFG[[i]][,c(dim1,dim2)]),aes(x=MFA$MatrixEFG[[i]][,dim1],y=MFA$MatrixEFG[[i]][,dim2],color=category))+ggtitle(paste("Partial Factor Scores & Variable Loadings - Observation",i))+
+geom_point(size=3.8)+geom_text(aes(label=labels,vjust = 2, hjust = 0.5))+labs(x=paste("Axis",dim1),y=paste("Axis",dim2))
+print(plot[[i]])
+}}
+ID = wines[,1]
+plot(MFA,ID,1,2)
+nrow(X)
+nrow(MFA$MatrixZ)
+check_label<-function(MFA,labels){
+if(nrow(MFA$MatrixZ)!=length(labels)){
+stop("\n'labels' must have the same length as the number of the rows in the data")
+}
+TRUE
+}
+library(devtools)
+# creating documentation (i.e. the Rd files in man/)
+devtools::document()
+# checking documentation
+devtools::check_man() # run tests
+devtools::test()
+# checking documentation
+devtools::build_vignettes()
+library(devtools)
+# creating documentation (i.e. the Rd files in man/)
+devtools::document()
+# checking documentation
+devtools::check_man() # run tests
+devtools::test()
+# checking documentation
+devtools::build_vignettes()
+plot_factorscore(mtcars[c(1:2,4:5,8:9,20:21),],sets=list(1:3,4:6,7:8,9:11),dim1=1,dim2=2,
+labels=c("Maz1","Maz2","Hor1","Hor2","Merc1","Merc2","Toyota1","Toyota2"))
+check_label<-function(MFA,labels){
+if(nrow(MFA$MatrixZ)!=length(labels)){
+stop("\n'labels' must have the same length as the number of the rows in the data")
+}
+TRUE
+}
+plot_factorscore<-function(data,sets,center=TRUE,scale=TRUE,dim1,dim2,labels){
+MFA<-mfa(data,sets=sets,ncomps=NULL,center=center,scale=scale)
+check_label(MFA,labels)
+check_dim(MFA,dim1)
+check_dim(MFA,dim2)
+library(stringr)
+number<-str_extract(labels,"[[:digit:]]+")
+category<-str_extract(labels,"[a-zA-Z]+")
+library(ggplot2)
+p=ggplot(as.data.frame(MFA$MatrixF),aes(x=MFA$MatrixF[,dim1],y=MFA$MatrixF[,dim2],color=category))+labs(x=paste("Axis",dim1),y=paste("Axis",dim2))
+p=p+geom_point(size=3.8)
+p=p+geom_text(aes(label = number, vjust = 1.1, hjust = -0.5))
+print(p)
+}
+plot_factorscore(mtcars[c(1:2,4:5,8:9,20:21),],sets=list(1:3,4:6,7:8,9:11),dim1=1,dim2=2,
+labels=c("Maz1","Maz2","Hor1","Hor2","Merc1","Merc2","Toyota1","Toyota2"))
+devtools::document()
+# checking documentation
+devtools::check_man() # run tests
+devtools::test()
+# checking documentation
+devtools::build_vignettes()
+# building tarball (e.g. oski_0.1.tar.gz)
+devtools::build()
+devtools::install()
+devtools::document()
+# checking documentation
+devtools::check_man() # run tests
+devtools::test()
+# checking documentation
+devtools::build_vignettes()
+# building tarball (e.g. oski_0.1.tar.gz)
+devtools::build()
+# checking install
+devtools::install()

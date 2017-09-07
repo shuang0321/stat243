@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "# auxiliar function to check the dimension of table1 and table2\ncheck_types<-function(type){\n  if(type>3 | type <1){\n    stop(\"\\n'type' must be 1, 2 or 3\")\n  }\n  if(type%%1!=0){\n    stop(\"\\n'type' must be 1, 2 or 3\")\n  }\n  TRUE\n}\n\n\n#' @title Compute contribution\n#' @description This function gets the contribution\n#' @param X - the raw matrix need to be dealt with\n#' @param sets -  list of vectors indicating the sets of variables (i.e. the blocks)\n#' @param type - 1: Contribution of an observation to a dimension\n#' 2: Contribution of a variable to a dimension\n#' 3: Contribution of a table to a dimension.\n#' @return contributions : the contribution of required type\n#' @export\n#' @examples\n#' contr <- contributions(X=mtcars,sets=list(1:3,4:6,7:8,9:11),type=1)\n\ncontributions<-function(X,sets, type=1) {\n  check_sets(X,sets)\n  check_types(type)\n  ## initialize and get the mfa of the raw matrix\n\n  MFA<-mfa(X,sets,ncomps=NULL,TRUE,TRUE) #get the mfa of raw matrix\n\n  rcontribution<-NULL\n\n  contribution1<-matrix(nrow=nrow(MFA$MatrixF),ncol=ncol(MFA$MatrixF))\n\n  contribution2<-matrix(nrow=nrow(MFA$MatrixV),ncol=ncol(MFA$MatrixV))\n\n  contribution3<-matrix(nrow=length(sets),ncol=ncol(MFA$MatrixV))\n\n  eigen<-NULL  #the eigenvalue\n\n  a<-NULL #the alpha weight\n\n  m<-rep(1/nrow(X),nrow(X))  #the weight of each row\n\n  start<-1   #start point of type3\n\n  ##get the contribution\n\n  if(type==1){\n    for (j in 1:ncol(MFA$MatrixF))\n    {\n      eigen[j]<-MFA$MatrixA[j,2] #get the eigenvalue of jth dimension\n\n      for (i in 1:nrow(X))\n        contribution1[i,j]<-(m[j]*(MFA$MatrixF[i,j])^2)/eigen[j] # Contribution of ith observation to jth dimension.\n    }\n    rcontribution<-contribution1\n  }\n\n  else{\n    if(type==2)\n    {\n      a<-MFA$MatrixPCol\n      for (j in 1:ncol(MFA$MatrixV))\n      {\n        for (i in 1:nrow(MFA$MatrixV))\n          contribution2[i,j]<-(MFA$MatrixV[i,j])^2*a[j]  #Contribution of ith variable to a jth dimensionn\n      }\n      rcontribution<-contribution2\n    }\n\n    if(type==3)\n    {\n      a<-MFA$MatrixPCol\n      for (j in 1:ncol(MFA$MatrixV))\n      {\n        for (i in 1:nrow(MFA$MatrixV))\n          contribution2[i,j]<-(MFA$MatrixV[i,j])^2*a[j]\n      }\n\n### Revise begin\n      for (j in 1:ncol(contribution2))\n      {\n        for (h in 1: length(sets))\n        {\n          if(h==1)\n            start<-1\n          else\n            start<-length(sets[[h-1]])+start\n          contribution3[h,j]<- sum(contribution2[start:(start+length(sets[[h]])-1),j]) #Contribution of hth table to j dimension.\n        }\n      }\n### Revise end\n      rcontribution<-contribution3\n    }\n  }\n\n  return(rcontribution)\n\n}\n",
+    "created" : 1481233236215.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1515676246",
+    "id" : "CCED3F1F",
+    "lastKnownWriteTime" : 1480544542,
+    "last_content_update" : 1480544542,
+    "path" : "~/Desktop/study/243 final project/MFA/R/contributions.R",
+    "project_path" : "R/contributions.R",
+    "properties" : {
+    },
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

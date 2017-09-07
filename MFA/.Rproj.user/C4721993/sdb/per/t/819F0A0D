@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "# auxiliar function to check k\ncheck_pos_integer<-function(k){\n  if(!is.numeric(k)){\n    stop(paste(\"\\n\",k,\"must be a number\"))\n  }\n  if(k%%1!=0){\n    stop(paste(\"\\n\",k,\"must be an integer\"))\n  }\n  if(k<1){\n    stop(paste(\"\\n\",k,\"must be a positive integer equal or bigger to 1\"))\n  }\n  TRUE\n}\n\n\n\n#' @title Simulate bootstrap sampling\n#' @description This function simulates bootstrap sampling of partial factor scores\n#' @param dataset - data set\n#' @param sets - list of vectors indicating the sets of variables\n#' @param ncomps - integer, how many number of components\n#' @param center - logical argument, whether to center\n#' @param scale - logical arugment, whether to scale\n#' @param k - integer, size of sampling for each bootstrap variable\n#' @param B - integer, size of bootstrap sampling\n#' @return List containing:\n#'\n#' Mean  - List of bootstrap means for each axis\n#'\n#' Variance  - List of bootstrap variance for each axis\n#'\n#' Ratio  - List of bootstrap ratio for each axis\n#'\n#' Size  - Size of bootstrap samples\n#'\n#' Dimension - Dimension of bootstrap samples (number of axis)\n#' @export\n#' @examples\n#' b.sample <- bootstrap(dataset=mtcars,sets=list(1:3,4:6,7:8,9:11), ncomps=NULL, center=TRUE, scale=TRUE, k=10,B=100)\n\n\n\nbootstrap<- function(dataset,sets, ncomps=NULL, center=TRUE, scale=TRUE, k,B){\n  check_pos_integer(k)\n  check_pos_integer(B)\n\n\n  MFA <-mfa(dataset,sets=sets,ncomps=ncomps,center=center,scale=scale)\n\n  if(is.null(ncomps)){\n    ncomps=ncol(MFA$MatrixEFG[[1]]) #since last few component might be too trivial to include\n  }\n\n\n  F_star<-list() #dummy list\n\n  for(j in 1:B){\n    sample<-sample(length(MFA$MatrixEFG),size=k,replace=TRUE) #sample k-tables w/replacement\n    llist<-matrix(rep(0,ncomps*nrow(dataset)),ncol=ncomps) #dummy matrix\n    for(i in sample){\n      llist<-llist+MFA$MatrixEFG[[i]] #add each table up\n    }\n    F_star[[j]]<- llist/k #first F_star value\n  }\n\n  # Finding bootstrap mean, variance and ratio\n  mean<-list()\n  var<-list()\n  ratio<-list()\n  axis1<-vector()\n  for(m in 1:ncomps){\n    axis1<-vector()\n    for(b in 1:B){\n      axis1<-cbind(axis1,as.vector(F_star[[b]][,m]))\n    }\n    mean[[m]]<-rowMeans(axis1)\n    var[[m]]<-apply(axis1,1,var)\n    ratio[[m]]<-mean[[m]]/var[[m]]\n  }\n\n  summary<-list(Mean=mean, Variance=var, Ratio=ratio, Size=B, Dimension=ncomps)\n  class(summary) <- \"bootstrap\"\n  summary\n\n}\n\n\n#' @title Plot method for 'bootstrap' object\n#' @description This function defines a plot method for \"bootstrap\" object\n#' @param  x - bootstrap-object\n#' @param \\dots further arguments ignored\n#' @return plot method for \"bootstrap\" object\n#' @export\n\n\n\nplot.bootstrap<-function(x, ...){\n\n  for(i in 1:x$Dimension){\n    barplot(x$Ratio[[i]], xlab=paste0(\"Axis\",i), horiz=TRUE,xaxt='n', yaxt='n',xlim=c(min(x$Ratio[[i]]),max(x$Ratio[[i]]))\n            #          , names.arg=x$names,pos=3\n    )\n    abline(v=0,col=\"gray60\")\n    text(0, 0, \"0\", col = \"red\")\n    abline(v=-3,col=\"gray60\")\n    text(-3, 0, \"-3\", col = \"red\")\n    abline(v=3,col=\"gray60\")\n    text(3, 0, \"+3\", col = \"red\")\n    title(sprintf(\"Bootstrap Ratios with %s Dimensions\",x$Dimension))\n  }\n\n}\n\n\n",
+    "created" : 1481233231983.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1225215234",
+    "id" : "819F0A0D",
+    "lastKnownWriteTime" : 1480544542,
+    "last_content_update" : 1480544542,
+    "path" : "~/Desktop/study/243 final project/MFA/R/bootstrap.R",
+    "project_path" : "R/bootstrap.R",
+    "properties" : {
+    },
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
